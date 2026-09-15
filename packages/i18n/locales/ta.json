@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "messages": {
+    "app.name": "ShareHaul",
+    "auth.otp.title": "மொபைல் எண்ணை உள்ளிடவும்",
+    "load.post": "சுமை பதிவு",
+    "mode.dedicated": "தனியார்",
+    "mode.shared": "பகிர்வு",
+    "mode.return": "ரிட்டர்ன்",
+    "trip.track": "பயணத்தை கண்காணி",
+    "pod.submit": "டெலிவரி ஆதாரம்",
+    "claim.open": "உரிமைகோரல் திற",
+    "insurance.add": "சரக்கு காப்பீடு",
+    "shared.savings": "சேமிப்பு",
+    "shared.coloads": "இணை சுமைகள்",
+    "kyc.submit": "KYC சமர்ப்பி",
+    "docs.lr": "LR வழங்கு",
+    "corridor.pick": "பாதை தேர்வு"
+  }
+}

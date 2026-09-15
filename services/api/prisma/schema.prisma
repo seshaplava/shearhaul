@@ -1,0 +1,590 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SHIPPER
+  DRIVER
+  FLEET_OWNER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum KycStatus {
+  NOT_STARTED
+  SUBMITTED
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum LoadMode {
+  DEDICATED
+  SHARED
+  RETURN
+}
+
+enum LoadStatus {
+  DRAFT
+  OPEN
+  MATCHING
+  BOOKED
+  IN_TRIP
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum TripStatus {
+  DRAFT
+  MATCHING
+  ASSIGNED
+  EN_ROUTE_PICKUP
+  AT_PICKUP
+  LOADED
+  IN_TRANSIT
+  AT_DROPOFF
+  DELIVERED
+  SETTLING
+  SETTLED
+  CANCELLED
+  DISPUTED
+}
+
+enum StopType {
+  PICKUP
+  DROPOFF
+}
+
+enum PaymentStatus {
+  CREATED
+  HOLD_PENDING
+  HELD
+  CAPTURE_PENDING
+  CAPTURED
+  REFUND_PENDING
+  REFUNDED
+  FAILED
+  DISPUTE_HOLD
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum ClaimStatus {
+  OPEN
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SETTLED
+}
+
+enum ClaimType {
+  DAMAGE
+  THEFT
+  DELAY
+  SHORTAGE
+}
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+  phone     String     @unique
+  name      String?
+  locale    String     @default("en")
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  roles           UserRoleAssignment[]
+  shipperProfile  ShipperProfile?
+  driverProfile   DriverProfile?
+  fleetProfile    FleetOwnerProfile?
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  deviceTokens    DeviceToken[]
+  notifications   AppNotification[]
+
+  @@map("users")
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String
+  platform  String   @default("web")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, token])
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+model UserRoleAssignment {
+  id     String   @id @default(uuid()) @db.Uuid
+  userId String   @map("user_id") @db.Uuid
+  role   UserRole
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model OtpChallenge {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String
+  codeHash  String   @map("code_hash")
+  expiresAt DateTime @map("expires_at")
+  attempts  Int      @default(0)
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone])
+  @@map("otp_challenges")
+}
+
+model ShipperProfile {
+  id           String  @id @default(uuid()) @db.Uuid
+  userId       String  @unique @map("user_id") @db.Uuid
+  businessName String? @map("business_name")
+  gstin        String?
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loads LoadRequest[]
+
+  @@map("shipper_profiles")
+}
+
+model FleetOwnerProfile {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @unique @map("user_id") @db.Uuid
+  businessName    String?   @map("business_name")
+  payoutAccountRef String?  @map("payout_account_ref")
+  kycStatus       KycStatus @default(NOT_STARTED) @map("kyc_status")
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drivers  DriverProfile[]
+  vehicles Vehicle[]
+
+  @@map("fleet_owner_profiles")
+}
+
+model DriverProfile {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @unique @map("user_id") @db.Uuid
+  licenseNo    String?   @map("license_no")
+  fleetOwnerId String?   @map("fleet_owner_id") @db.Uuid
+  ratingAvg    Float     @default(5) @map("rating_avg")
+  kycStatus    KycStatus @default(NOT_STARTED) @map("kyc_status")
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fleetOwner FleetOwnerProfile? @relation(fields: [fleetOwnerId], references: [id])
+  vehicles   Vehicle[]
+  trips      Trip[]
+
+  @@map("driver_profiles")
+}
+
+model Vehicle {
+  id           String    @id @default(uuid()) @db.Uuid
+  regNo        String    @unique @map("reg_no")
+  type         String
+  capacityKg   Int       @map("capacity_kg")
+  capacityCft  Int       @map("capacity_cft")
+  kycStatus    KycStatus @default(NOT_STARTED) @map("kyc_status")
+  driverId     String?   @map("driver_id") @db.Uuid
+  fleetOwnerId String?   @map("fleet_owner_id") @db.Uuid
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  driver     DriverProfile?     @relation(fields: [driverId], references: [id])
+  fleetOwner FleetOwnerProfile? @relation(fields: [fleetOwnerId], references: [id])
+  trips      Trip[]
+
+  @@map("vehicles")
+}
+
+model Corridor {
+  id         String  @id @default(uuid()) @db.Uuid
+  code       String  @unique
+  originCity String  @map("origin_city")
+  destCity   String  @map("dest_city")
+  active     Boolean @default(false)
+
+  rateCards RateCard[]
+  loads     LoadRequest[]
+  trips     Trip[]
+
+  @@map("corridors")
+}
+
+model RateCard {
+  id          String   @id @default(uuid()) @db.Uuid
+  corridorId  String   @map("corridor_id") @db.Uuid
+  vehicleType String   @map("vehicle_type")
+  basePaisa   Int      @map("base_paisa")
+  perKmPaisa  Int      @default(0) @map("per_km_paisa")
+  perKgPaisa  Int      @default(0) @map("per_kg_paisa")
+  version     Int      @default(1)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  corridor Corridor @relation(fields: [corridorId], references: [id])
+
+  @@index([corridorId, vehicleType])
+  @@map("rate_cards")
+}
+
+model LoadRequest {
+  id           String     @id @default(uuid()) @db.Uuid
+  shipperId    String     @map("shipper_id") @db.Uuid
+  corridorId   String?    @map("corridor_id") @db.Uuid
+  mode         LoadMode
+  status       LoadStatus @default(DRAFT)
+  originLat    Float      @map("origin_lat")
+  originLng    Float      @map("origin_lng")
+  originAddress String    @map("origin_address")
+  destLat      Float      @map("dest_lat")
+  destLng      Float      @map("dest_lng")
+  destAddress  String     @map("dest_address")
+  weightKg     Int        @map("weight_kg")
+  volumeCft    Int        @map("volume_cft")
+  cargoType    String     @map("cargo_type")
+  windowStart  DateTime   @map("window_start")
+  windowEnd    DateTime   @map("window_end")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  shipper  ShipperProfile @relation(fields: [shipperId], references: [id])
+  corridor Corridor?      @relation(fields: [corridorId], references: [id])
+  offers   MatchOffer[]
+  stops    TripStop[]
+
+  @@index([status, mode])
+  @@map("load_requests")
+}
+
+model MatchOffer {
+  id              String   @id @default(uuid()) @db.Uuid
+  loadId          String   @map("load_id") @db.Uuid
+  vehicleId       String?  @map("vehicle_id") @db.Uuid
+  tripId          String?  @map("trip_id") @db.Uuid
+  pricePaisa      Int      @map("price_paisa")
+  priceBreakdown  Json     @map("price_breakdown")
+  score           Float?
+  expiresAt       DateTime @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  load LoadRequest @relation(fields: [loadId], references: [id], onDelete: Cascade)
+
+  @@index([loadId])
+  @@map("match_offers")
+}
+
+model Trip {
+  id         String     @id @default(uuid()) @db.Uuid
+  mode       LoadMode
+  status     TripStatus @default(DRAFT)
+  vehicleId  String?    @map("vehicle_id") @db.Uuid
+  driverId   String?    @map("driver_id") @db.Uuid
+  corridorId String?    @map("corridor_id") @db.Uuid
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  vehicle  Vehicle?       @relation(fields: [vehicleId], references: [id])
+  driver   DriverProfile? @relation(fields: [driverId], references: [id])
+  corridor Corridor?      @relation(fields: [corridorId], references: [id])
+  stops    TripStop[]
+  events   TripEvent[]
+  payments PaymentIntent[]
+  claims   Claim[]
+  savings  SavingsLedger?
+  trackingPoints TrackingPoint[]
+
+  @@index([status])
+  @@map("trips")
+}
+
+model TrackingPoint {
+  id         String   @id @default(uuid()) @db.Uuid
+  tripId     String   @map("trip_id") @db.Uuid
+  lat        Float
+  lng        Float
+  speed      Float?
+  recordedAt DateTime @map("recorded_at")
+  receivedAt DateTime @default(now()) @map("received_at")
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, recordedAt])
+  @@map("tracking_points")
+}
+
+model TripStop {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @map("trip_id") @db.Uuid
+  loadId    String?  @map("load_id") @db.Uuid
+  seq       Int
+  type      StopType
+  address   String
+  lat       Float
+  lng       Float
+  eta       DateTime?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  trip Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  load LoadRequest? @relation(fields: [loadId], references: [id])
+  pod  Pod?
+
+  @@unique([tripId, seq])
+  @@map("trip_stops")
+}
+
+model TripEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @map("trip_id") @db.Uuid
+  fromStatus TripStatus? @map("from_status")
+  toStatus  TripStatus @map("to_status")
+  actorId   String?  @map("actor_id") @db.Uuid
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, createdAt])
+  @@map("trip_events")
+}
+
+model Pod {
+  id        String   @id @default(uuid()) @db.Uuid
+  stopId    String   @unique @map("stop_id") @db.Uuid
+  photoS3Key String? @map("photo_s3_key")
+  otpOk     Boolean  @default(false) @map("otp_ok")
+  geoOk     Boolean  @default(false) @map("geo_ok")
+  passed    Boolean  @default(false)
+  signedAt  DateTime? @map("signed_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  stop TripStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
+
+  @@map("pods")
+}
+
+model PaymentIntent {
+  id              String        @id @default(uuid()) @db.Uuid
+  tripId          String?       @map("trip_id") @db.Uuid
+  loadId          String?       @map("load_id") @db.Uuid
+  amountPaisa     Int           @map("amount_paisa")
+  currency        String        @default("INR")
+  status          PaymentStatus @default(CREATED)
+  gatewayOrderId  String?       @map("gateway_order_id")
+  gatewayPaymentId String?      @map("gateway_payment_id")
+  gatewayProvider String        @default("mock") @map("gateway_provider")
+  idempotencyKey  String        @unique @map("idempotency_key")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  trip    Trip?         @relation(fields: [tripId], references: [id])
+  ledger  LedgerEntry[]
+  payouts Payout[]
+
+  @@map("payment_intents")
+}
+
+model LedgerEntry {
+  id             String   @id @default(uuid()) @db.Uuid
+  paymentId      String?  @map("payment_id") @db.Uuid
+  account        String
+  direction      String
+  amountPaisa    Int      @map("amount_paisa")
+  refType        String   @map("ref_type")
+  refId          String   @map("ref_id")
+  idempotencyKey String   @unique @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  payment PaymentIntent? @relation(fields: [paymentId], references: [id])
+
+  @@map("ledger_entries")
+}
+
+model Payout {
+  id          String       @id @default(uuid()) @db.Uuid
+  paymentId   String       @map("payment_id") @db.Uuid
+  beneficiary String
+  amountPaisa Int          @map("amount_paisa")
+  status      PayoutStatus @default(PENDING)
+  gatewayRef  String?      @map("gateway_ref")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  payment PaymentIntent @relation(fields: [paymentId], references: [id])
+
+  @@map("payouts")
+}
+
+model Claim {
+  id            String      @id @default(uuid()) @db.Uuid
+  tripId        String      @map("trip_id") @db.Uuid
+  type          ClaimType
+  status        ClaimStatus @default(OPEN)
+  amountClaimed Int?        @map("amount_claimed")
+  notes         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  trip Trip @relation(fields: [tripId], references: [id])
+
+  @@map("claims")
+}
+
+model SavingsLedger {
+  id         String   @id @default(uuid()) @db.Uuid
+  tripId     String   @unique @map("trip_id") @db.Uuid
+  inrSaved   Int      @map("inr_saved")
+  kmSaved    Float    @map("km_saved")
+  co2KgProxy Float    @map("co2_kg_proxy")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  trip Trip @relation(fields: [tripId], references: [id])
+
+  @@map("savings_ledger")
+}
+
+model OutboxEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String
+  payload     Json
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([publishedAt])
+  @@map("outbox_events")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model FeatureFlag {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  enabled   Boolean  @default(false)
+  meta      Json?
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flags")
+}
+
+model Rating {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @map("trip_id") @db.Uuid
+  fromUserId String  @map("from_user_id") @db.Uuid
+  toUserId  String   @map("to_user_id") @db.Uuid
+  stars     Int
+  tags      String[] @default([])
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([tripId, fromUserId, toUserId])
+  @@map("ratings")
+}
+
+model KycDocument {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  docType     String    @map("doc_type")
+  storageKey  String    @map("storage_key")
+  status      KycStatus @default(SUBMITTED)
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("kyc_documents")
+}
+
+model InsuranceQuote {
+  id           String   @id @default(uuid()) @db.Uuid
+  loadId       String   @map("load_id") @db.Uuid
+  tripId       String?  @map("trip_id") @db.Uuid
+  sku          String   @default("BASIC_CARGO")
+  premiumPaisa Int      @map("premium_paisa")
+  coverPaisa   Int      @map("cover_paisa")
+  selected     Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([loadId])
+  @@map("insurance_quotes")
+}
+
+model AppNotification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  channel   String   @default("IN_APP")
+  title     String
+  body      String
+  meta      Json?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("app_notifications")
+}
+
+model DocumentRecord {
+  id         String   @id @default(uuid()) @db.Uuid
+  tripId     String?  @map("trip_id") @db.Uuid
+  loadId     String?  @map("load_id") @db.Uuid
+  docType    String   @map("doc_type")
+  storageKey String   @map("storage_key")
+  meta       Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([tripId])
+  @@map("document_records")
+}
