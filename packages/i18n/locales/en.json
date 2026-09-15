@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "messages": {
+    "app.name": "ShareHaul",
+    "auth.otp.title": "Enter mobile number",
+    "load.post": "Post a load",
+    "mode.dedicated": "Dedicated",
+    "mode.shared": "Shared",
+    "mode.return": "Return load",
+    "trip.track": "Track trip",
+    "pod.submit": "Submit proof of delivery",
+    "claim.open": "Open claim",
+    "insurance.add": "Add cargo insurance",
+    "shared.savings": "You save vs dedicated",
+    "shared.coloads": "Co-loads on this truck",
+    "kyc.submit": "Submit KYC document",
+    "docs.lr": "Issue lorry receipt",
+    "corridor.pick": "Choose corridor"
+  }
+}

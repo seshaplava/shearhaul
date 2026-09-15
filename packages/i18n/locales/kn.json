@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "messages": {
+    "app.name": "ShareHaul",
+    "auth.otp.title": "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ",
+    "load.post": "ಲೋಡ್ ಪೋಸ್ಟ್ ಮಾಡಿ",
+    "mode.dedicated": "ಡೆಡಿಕೇಟೆಡ್",
+    "mode.shared": "ಶೇರ್ಡ್",
+    "mode.return": "ರಿಟರ್ನ್ ಲೋಡ್",
+    "trip.track": "ಟ್ರಿಪ್ ಟ್ರ್ಯಾಕ್",
+    "pod.submit": "ಡೆಲಿವರಿ ಪುರಾವೆ",
+    "claim.open": "ಕ್ಲೈಮ್ ತೆರೆಯಿರಿ",
+    "insurance.add": "ಸರಕು ವಿಮೆ",
+    "shared.savings": "ಉಳಿತಾಯ",
+    "shared.coloads": "ಸಹ-ಲೋಡ್‌ಗಳು",
+    "kyc.submit": "KYC ಸಲ್ಲಿಸಿ",
+    "docs.lr": "LR ನೀಡಿ",
+    "corridor.pick": "ಕಾರಿಡಾರ್ ಆಯ್ಕೆ"
+  }
+}

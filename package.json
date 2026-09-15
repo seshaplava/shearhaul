@@ -1,0 +1,15 @@
+{
+  "name": "sharehaul",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ShareHaul monorepo — Pan-India shared freight marketplace",
+  "scripts": {
+    "dev:api": "npm --prefix services/api run start:dev",
+    "dev:admin": "npm --prefix apps/admin_web run dev",
+    "build:api": "npm --prefix services/api run build",
+    "db:generate": "npm --prefix services/api run prisma:generate",
+    "db:migrate": "npm --prefix services/api run prisma:migrate",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down"
+  }
+}

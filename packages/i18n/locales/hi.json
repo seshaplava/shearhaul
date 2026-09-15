@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "messages": {
+    "app.name": "ShareHaul",
+    "auth.otp.title": "मोबाइल नंबर दर्ज करें",
+    "load.post": "लोड पोस्ट करें",
+    "mode.dedicated": "डेडिकेटेड",
+    "mode.shared": "शेयर्ड",
+    "mode.return": "रिटर्न लोड",
+    "trip.track": "ट्रिप ट्रैक करें",
+    "pod.submit": "डिलीवरी प्रमाण जमा करें",
+    "claim.open": "दावा खोलें",
+    "insurance.add": "कार्गो बीमा जोड़ें",
+    "shared.savings": "डेडिकेटेड की तुलना में बचत",
+    "shared.coloads": "इस ट्रक पर सह-लोड",
+    "kyc.submit": "KYC दस्तावेज़ जमा करें",
+    "docs.lr": "लॉरी रसीद जारी करें",
+    "corridor.pick": "कॉरिडोर चुनें"
+  }
+}

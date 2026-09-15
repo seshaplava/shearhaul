@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "messages": {
+    "app.name": "ShareHaul",
+    "auth.otp.title": "मोबाइल नंबर टाका",
+    "load.post": "लोड पोस्ट करा",
+    "mode.dedicated": "डेडिकेटेड",
+    "mode.shared": "शेअर्ड",
+    "mode.return": "रिटर्न लोड",
+    "trip.track": "ट्रिप ट्रॅक करा",
+    "pod.submit": "डिलिव्हरी पुरावा",
+    "claim.open": "클레म उघडा",
+    "insurance.add": "कार्गो विमा",
+    "shared.savings": "बचत",
+    "shared.coloads": "सह-लोड",
+    "kyc.submit": "KYC सादर करा",
+    "docs.lr": "LR जारी करा",
+    "corridor.pick": "कॉरिडॉर निवडा"
+  }
+}

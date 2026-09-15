@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "messages": {
+    "app.name": "ShareHaul",
+    "auth.otp.title": "మొబైల్ నంబర్ నమోదు చేయండి",
+    "load.post": "లోడ్ పోస్ట్ చేయండి",
+    "mode.dedicated": "డెడికేటెడ్",
+    "mode.shared": "షేర్డ్",
+    "mode.return": "రిటర్న్",
+    "trip.track": "ట్రిప్ ట్రాక్",
+    "pod.submit": "డెలివరీ రుజువు",
+    "claim.open": "క్లెయిమ్ తెరవండి",
+    "insurance.add": "కార్గో భీమా",
+    "shared.savings": "ఆదా",
+    "shared.coloads": "కలిసి లోడ్లు",
+    "kyc.submit": "KYC సమర్పించండి",
+    "docs.lr": "LR జారీ",
+    "corridor.pick": "కారిడార్ ఎంచుకోండి"
+  }
+}

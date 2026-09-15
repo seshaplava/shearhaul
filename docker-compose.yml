@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: sharehaul-postgres
+    environment:
+      POSTGRES_USER: sharehaul
+      POSTGRES_PASSWORD: sharehaul
+      POSTGRES_DB: sharehaul
+    ports:
+      - "5432:5432"
+    volumes:
+      - sharehaul_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sharehaul -d sharehaul"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: sharehaul-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: sharehaul-api
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      NODE_ENV: production
+      DATABASE_URL: postgresql://sharehaul:sharehaul@postgres:5432/sharehaul?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: sharehaul-docker-dev-secret-change-me
+      JWT_EXPIRES_SEC: "604800"
+      OTP_TTL_SEC: "300"
+      OTP_DEV_CODE: "123456"
+      SMS_PROVIDER: console
+      STORAGE_PROVIDER: local
+      PAYMENTS_PROVIDER: mock
+      PUSH_PROVIDER: db
+      MAPS_PROVIDER: haversine
+      KYC_PROVIDER: manual
+      LOCAL_STORAGE_DIR: /data/storage
+    volumes:
+      - sharehaul_api_storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  admin_web:
+    build:
+      context: ./apps/admin_web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000/v1
+    container_name: sharehaul-admin
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      HOSTNAME: "0.0.0.0"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000/v1
+    container_name: sharehaul-web
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: "3002"
+      HOSTNAME: "0.0.0.0"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  sharehaul_pg:
+  sharehaul_api_storage:
