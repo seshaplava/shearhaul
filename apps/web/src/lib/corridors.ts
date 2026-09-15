@@ -1,0 +1,58 @@
+export const CORRIDORS = {
+  "BOM-PNQ": {
+    label: "Mumbai → Pune",
+    originLat: 19.076,
+    originLng: 72.8777,
+    originAddress: "Mumbai Andheri",
+    destLat: 18.5204,
+    destLng: 73.8567,
+    destAddress: "Pune Baner",
+  },
+  "PNQ-BOM": {
+    label: "Pune → Mumbai (return)",
+    originLat: 18.5204,
+    originLng: 73.8567,
+    originAddress: "Pune Baner",
+    destLat: 19.076,
+    destLng: 72.8777,
+    destAddress: "Mumbai Andheri",
+  },
+  "DEL-JAI": {
+    label: "Delhi → Jaipur",
+    originLat: 28.6139,
+    originLng: 77.209,
+    originAddress: "Delhi Okhla",
+    destLat: 26.9124,
+    destLng: 75.7873,
+    destAddress: "Jaipur Sitapura",
+  },
+  "MAA-BLR": {
+    label: "Chennai → Bengaluru",
+    originLat: 13.0827,
+    originLng: 80.2707,
+    originAddress: "Chennai Guindy",
+    destLat: 12.9716,
+    destLng: 77.5946,
+    destAddress: "Bengaluru Peenya",
+  },
+  "HYD-BLR": {
+    label: "Hyderabad → Bengaluru",
+    originLat: 17.385,
+    originLng: 78.4867,
+    originAddress: "Hyderabad Kukatpally",
+    destLat: 12.9716,
+    destLng: 77.5946,
+    destAddress: "Bengaluru Electronic City",
+  },
+  "AMD-BOM": {
+    label: "Ahmedabad → Mumbai",
+    originLat: 23.0225,
+    originLng: 72.5714,
+    originAddress: "Ahmedabad Vatva",
+    destLat: 19.076,
+    destLng: 72.8777,
+    destAddress: "Mumbai Bhiwandi",
+  },
+} as const;
+
+export type CorridorCode = keyof typeof CORRIDORS;
